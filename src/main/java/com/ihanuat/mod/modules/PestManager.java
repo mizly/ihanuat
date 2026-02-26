@@ -409,7 +409,9 @@ public class PestManager {
                 prepSwappedForCurrentPestCycle = false;
 
                 client.player.displayClientMessage(
-                        Component.literal("§6Starting Pest Cleaner script (" + currentInfestedPlot + ")..."), true);
+                        Component.literal("§6Starting Pest Cleaner script (Plot " + currentInfestedPlot + ")..."), true);
+                ClientUtils.sendCommand(client, "/plottp " + currentInfestedPlot);
+                Thread.sleep(300); // Wait for plot tp
                 ClientUtils.sendCommand(client, "/setspawn");
                 Thread.sleep(400); // Wait on thread, not main thread
 
