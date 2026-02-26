@@ -286,12 +286,12 @@ public class PestManager {
                 client.player.displayClientMessage(Component.literal(
                         "§eRestoring Farming Wardrobe (Slot " + MacroConfig.wardrobeSlotFarming + ")..."), true);
                 client.execute(() -> GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotFarming));
-                Thread.sleep(400);
+                Thread.sleep(600);
                 while (GearManager.isSwappingWardrobe)
                     Thread.sleep(50);
                 while (GearManager.wardrobeCleanupTicks > 0)
                     Thread.sleep(50);
-                Thread.sleep(250);
+                Thread.sleep(500);
             }
 
             com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);

@@ -124,12 +124,12 @@ public class VisitorManager {
                     "§eRestoring Farming Wardrobe (Slot " + MacroConfig.wardrobeSlotFarming + ")..."), true);
             client.execute(() -> GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotFarming));
             try {
-                Thread.sleep(400);
+                Thread.sleep(600);
                 while (GearManager.isSwappingWardrobe)
                     Thread.sleep(50);
                 while (GearManager.wardrobeCleanupTicks > 0)
                     Thread.sleep(50);
-                Thread.sleep(250);
+                Thread.sleep(500);
             } catch (InterruptedException ignored) {
             }
         }
@@ -137,10 +137,12 @@ public class VisitorManager {
         if (MacroConfig.autoEquipment) {
             GearManager.ensureEquipment(client, true); // Restore farming gear
             try {
-                Thread.sleep(400);
+                Thread.sleep(600);
                 while (GearManager.isSwappingEquipment)
                     Thread.sleep(50);
-                Thread.sleep(250);
+                while (GearManager.wardrobeCleanupTicks > 0)
+                    Thread.sleep(50);
+                Thread.sleep(500);
             } catch (InterruptedException ignored) {
             }
         }

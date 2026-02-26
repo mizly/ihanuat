@@ -42,14 +42,11 @@ public class GearManager {
         if (trackedWardrobeSlot == slot) {
             ClientUtils.sendCommand(client, ".ez-stopscript");
             new Thread(() -> {
-                try {
-                    Thread.sleep(400);
-                    client.execute(() -> {
-                        GearManager.swapToFarmingTool(client);
-                        ClientUtils.sendCommand(client, MacroConfig.restartScript);
-                    });
-                } catch (Exception ignored) {
-                }
+                MacroConfig.sleepRandomized(400);
+                client.execute(() -> {
+                    GearManager.swapToFarmingTool(client);
+                    ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                });
             }).start();
             return;
         }
@@ -84,7 +81,7 @@ public class GearManager {
             return;
 
         long now = System.currentTimeMillis();
-        if (now - wardrobeInteractionTime < MacroConfig.guiClickDelay)
+        if (now - wardrobeInteractionTime < MacroConfig.getRandomizedDelay(MacroConfig.guiClickDelay))
             return;
 
         String title = screen.getTitle().getString();
@@ -127,8 +124,12 @@ public class GearManager {
             wardrobeInteractionStage = 1;
         } else if (wardrobeInteractionStage == 1) {
             trackedWardrobeSlot = targetWardrobeSlot;
-            isSwappingWardrobe = false;
             client.player.closeContainer();
+            wardrobeInteractionTime = now;
+            wardrobeInteractionStage = 2;
+        } else if (wardrobeInteractionStage == 2) {
+            isSwappingWardrobe = false;
+            wardrobeCleanupTicks = 10;
             handleWardrobeCompletion(client);
         }
     }
@@ -146,17 +147,13 @@ public class GearManager {
             client.player.displayClientMessage(Component.literal("§aWardrobe swap finished. Restarting farming..."),
                     true);
             new Thread(() -> {
-                try {
-                    Thread.sleep(600);
-                    if (PestManager.isCleaningInProgress)
-                        return;
-                    client.execute(() -> {
-                        GearManager.swapToFarmingTool(client);
-                        ClientUtils.sendCommand(client, MacroConfig.restartScript);
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                MacroConfig.sleepRandomized(600);
+                if (PestManager.isCleaningInProgress)
+                    return;
+                client.execute(() -> {
+                    GearManager.swapToFarmingTool(client);
+                    ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                });
             }).start();
         }
     }
@@ -175,7 +172,7 @@ public class GearManager {
             return;
 
         long now = System.currentTimeMillis();
-        if (now - equipmentInteractionTime < MacroConfig.equipmentSwapDelay)
+        if (now - equipmentInteractionTime < MacroConfig.getRandomizedDelay(MacroConfig.equipmentSwapDelay))
             return;
 
         String title = screen.getTitle().getString();

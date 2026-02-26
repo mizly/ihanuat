@@ -36,7 +36,7 @@ public class GeorgeManager {
             return;
 
         long now = System.currentTimeMillis();
-        if (now - interactionTime < MacroConfig.guiClickDelay)
+        if (now - interactionTime < MacroConfig.getRandomizedDelay(MacroConfig.guiClickDelay))
             return;
 
         String title = screen.getTitle().getString();
@@ -201,14 +201,11 @@ public class GeorgeManager {
         // Resume farming script if we were farming
         if (com.ihanuat.mod.MacroStateManager.getCurrentState() == com.ihanuat.mod.MacroState.State.FARMING) {
             new Thread(() -> {
-                try {
-                    Thread.sleep(800);
-                    client.execute(() -> {
-                        GearManager.swapToFarmingTool(client);
-                        com.ihanuat.mod.util.ClientUtils.sendCommand(client, MacroConfig.restartScript);
-                    });
-                } catch (Exception ignored) {
-                }
+                MacroConfig.sleepRandomized(800);
+                client.execute(() -> {
+                    GearManager.swapToFarmingTool(client);
+                    com.ihanuat.mod.util.ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                });
             }).start();
         }
     }
@@ -249,13 +246,9 @@ public class GeorgeManager {
         confirmationCount = 0;
 
         new Thread(() -> {
-            try {
-                com.ihanuat.mod.util.ClientUtils.sendCommand(client, ".ez-stopscript");
-                Thread.sleep(3000); // Wait 3 seconds to allow user to abort if needed
-                com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/call george");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            com.ihanuat.mod.util.ClientUtils.sendCommand(client, ".ez-stopscript");
+            MacroConfig.sleepRandomized(3000); // Wait 3 seconds to allow user to abort if needed
+            com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/call george");
         }).start();
     }
 }
