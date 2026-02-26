@@ -244,7 +244,7 @@ public class IhanuatClient implements ClientModInitializer {
             // Stash Pickup Logic
             if (MacroConfig.autoStashManager && client.player != null) {
                 long now = System.currentTimeMillis();
-                if (now - lastStashPickupTime >= MacroConfig.getRandomizedDelay((int) STASH_PICKUP_DELAY_MS)) {
+                if (now - lastStashPickupTime >= STASH_PICKUP_DELAY_MS) {
                     lastStashPickupTime = now;
                     client.player.connection.sendCommand("pickupstash");
                 }

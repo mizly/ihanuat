@@ -188,11 +188,9 @@ public class PestManager {
                         Thread.sleep(250);
                     }
 
-                    client.execute(() -> {
-                        ClientUtils.sendCommand(client, ".ez-stopscript");
-                        ClientUtils.sendCommand(client, ".ez-startscript misc:visitor");
-                    });
-                    isCleaningInProgress = false;
+                    client.execute(() -> ClientUtils.sendCommand(client, ".ez-stopscript"));
+                    Thread.sleep(250);
+                    client.execute(() -> ClientUtils.sendCommand(client, ".ez-startscript misc:visitor"));
                     return;
                 }
 
@@ -236,7 +234,7 @@ public class PestManager {
     }
 
     private static void finalizeReturnToFarm(Minecraft client) {
-        if (!com.ihanuat.mod.MacroStateManager.isMacroRunning())
+        if (!com.ihanuat.mod.MacroStateManager.isMacroRunning() && !isReturningFromPestVisitor)
             return;
 
         try {
@@ -267,11 +265,9 @@ public class PestManager {
                     Thread.sleep(250);
                 }
 
-                client.execute(() -> {
-                    ClientUtils.sendCommand(client, ".ez-stopscript");
-                    ClientUtils.sendCommand(client, ".ez-startscript misc:visitor");
-                });
-                isCleaningInProgress = false;
+                client.execute(() -> ClientUtils.sendCommand(client, ".ez-stopscript"));
+                Thread.sleep(250);
+                client.execute(() -> ClientUtils.sendCommand(client, ".ez-startscript misc:visitor"));
                 return;
             }
 
@@ -294,8 +290,19 @@ public class PestManager {
                 Thread.sleep(500);
             }
 
+            if (MacroConfig.autoEquipment) {
+                GearManager.ensureEquipment(client, true); // Restore farming gear
+                Thread.sleep(600);
+                while (GearManager.isSwappingEquipment)
+                    Thread.sleep(50);
+                while (GearManager.wardrobeCleanupTicks > 0)
+                    Thread.sleep(50);
+                Thread.sleep(500);
+            }
+
             com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
             prepSwappedForCurrentPestCycle = false; // Ensure flag is reset when returning
+            isReturningFromPestVisitor = false;
             Thread.sleep(100);
             client.execute(() -> {
                 ClientUtils.sendCommand(client, ".ez-stopscript");
@@ -410,10 +417,10 @@ public class PestManager {
 
                 client.player.displayClientMessage(
                         Component.literal("§6Starting Pest Cleaner script (Plot " + currentInfestedPlot + ")..."), true);
-                ClientUtils.sendCommand(client, "/plottp " + currentInfestedPlot);
-                Thread.sleep(300); // Wait for plot tp
                 ClientUtils.sendCommand(client, "/setspawn");
-                Thread.sleep(400); // Wait on thread, not main thread
+                Thread.sleep(300); // Wait for setspawn
+                ClientUtils.sendCommand(client, "/plottp " + currentInfestedPlot);
+                Thread.sleep(400); // Wait for plot tp
 
                 client.execute(() -> {
                     GearManager.swapToFarmingTool(client);

@@ -61,7 +61,7 @@ public class VisitorManager {
     }
 
     public static void finalizeReturnToFarm(Minecraft client) {
-        if (MacroStateManager.getCurrentState() == MacroState.State.OFF)
+        if (MacroStateManager.getCurrentState() == MacroState.State.OFF && !PestManager.isReturningFromPestVisitor)
             return;
 
         try {
@@ -101,11 +101,12 @@ public class VisitorManager {
                 } catch (InterruptedException ignored) {
                 }
             }
-            client.execute(() -> {
-                ClientUtils.sendCommand(client, ".ez-stopscript");
-                ClientUtils.sendCommand(client, ".ez-startscript misc:visitor");
-            });
-            PestManager.isCleaningInProgress = false;
+            client.execute(() -> ClientUtils.sendCommand(client, ".ez-stopscript"));
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException ignored) {
+            }
+            client.execute(() -> ClientUtils.sendCommand(client, ".ez-startscript misc:visitor"));
             return;
         }
 
@@ -150,6 +151,7 @@ public class VisitorManager {
         client.player.displayClientMessage(Component.literal("\u00A7aSetting spawn and restarting farming script..."),
                 true);
         com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
+        PestManager.isReturningFromPestVisitor = false;
         try {
             Thread.sleep(100);
         } catch (InterruptedException ignored) {

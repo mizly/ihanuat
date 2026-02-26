@@ -38,21 +38,6 @@ public class MacroConfig {
     // GUI Click Delay (ms)
     public static int guiClickDelay = 500;
     public static int equipmentSwapDelay = 500;
-    public static int additionalRandomDelay = 0;
-
-    public static int getRandomizedDelay(int baseDelay) {
-        if (additionalRandomDelay <= 0)
-            return baseDelay;
-        return baseDelay + (int) (Math.random() * additionalRandomDelay);
-    }
-
-    public static void sleepRandomized(int baseDelay) {
-        try {
-            Thread.sleep(getRandomizedDelay(baseDelay));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
 
     // Restart Time (Minutes before expected server restart to stop macro)
     public static int restartTime = 5;
@@ -78,6 +63,11 @@ public class MacroConfig {
 
     public static void executePlotTpRewarp(net.minecraft.client.Minecraft client) {
         if (enablePlotTpRewarp) {
+            com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/setspawn");
+            // Short delay to ensure setspawn processes
+            try {
+                Thread.sleep(150);
+            } catch (InterruptedException ignored) {}
             com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/plottp " + plotTpNumber);
         }
     }
@@ -106,7 +96,6 @@ public class MacroConfig {
         data.armorSwapVisitor = armorSwapVisitor;
         data.guiClickDelay = guiClickDelay;
         data.equipmentSwapDelay = equipmentSwapDelay;
-        data.additionalRandomDelay = additionalRandomDelay;
         data.restartTime = restartTime;
         data.restartScript = restartScript;
 
@@ -156,7 +145,6 @@ public class MacroConfig {
                 armorSwapVisitor = data.armorSwapVisitor;
                 guiClickDelay = data.guiClickDelay > 0 ? data.guiClickDelay : 500;
                 equipmentSwapDelay = data.equipmentSwapDelay > 0 ? data.equipmentSwapDelay : 500;
-                additionalRandomDelay = data.additionalRandomDelay >= 0 ? data.additionalRandomDelay : 0;
                 restartTime = data.restartTime > 0 ? data.restartTime : 5;
                 if (data.restartScript != null && !data.restartScript.isBlank())
                     restartScript = data.restartScript;
@@ -198,7 +186,6 @@ public class MacroConfig {
         boolean armorSwapVisitor = false;
         int guiClickDelay = 500;
         int equipmentSwapDelay = 500;
-        int additionalRandomDelay = 0;
         int restartTime = 5;
         String restartScript = ".ez-startscript netherwart:1";
 

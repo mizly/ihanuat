@@ -42,7 +42,11 @@ public class GearManager {
         if (trackedWardrobeSlot == slot) {
             ClientUtils.sendCommand(client, ".ez-stopscript");
             new Thread(() -> {
-                MacroConfig.sleepRandomized(400);
+                try {
+                    Thread.sleep(400);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 client.execute(() -> {
                     GearManager.swapToFarmingTool(client);
                     ClientUtils.sendCommand(client, MacroConfig.restartScript);
@@ -81,7 +85,7 @@ public class GearManager {
             return;
 
         long now = System.currentTimeMillis();
-        if (now - wardrobeInteractionTime < MacroConfig.getRandomizedDelay(MacroConfig.guiClickDelay))
+        if (now - wardrobeInteractionTime < MacroConfig.guiClickDelay)
             return;
 
         String title = screen.getTitle().getString();
@@ -147,7 +151,11 @@ public class GearManager {
             client.player.displayClientMessage(Component.literal("§aWardrobe swap finished. Restarting farming..."),
                     true);
             new Thread(() -> {
-                MacroConfig.sleepRandomized(600);
+                try {
+                    Thread.sleep(600);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 if (PestManager.isCleaningInProgress)
                     return;
                 client.execute(() -> {
@@ -172,7 +180,7 @@ public class GearManager {
             return;
 
         long now = System.currentTimeMillis();
-        if (now - equipmentInteractionTime < MacroConfig.getRandomizedDelay(MacroConfig.equipmentSwapDelay))
+        if (now - equipmentInteractionTime < MacroConfig.equipmentSwapDelay)
             return;
 
         String title = screen.getTitle().getString();

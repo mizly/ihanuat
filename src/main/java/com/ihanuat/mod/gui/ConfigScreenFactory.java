@@ -76,12 +76,6 @@ public class ConfigScreenFactory {
                                 .setSaveConsumer(newValue -> MacroConfig.equipmentSwapDelay = newValue)
                                 .build());
 
-                general.addEntry(builder.getEntryBuilder()
-                                .startIntSlider(Component.literal("Additional Random Delay (ms)"),
-                                                MacroConfig.additionalRandomDelay, 0, 1000)
-                                .setDefaultValue(0)
-                                .setSaveConsumer(newValue -> MacroConfig.additionalRandomDelay = newValue)
-                                .build());
 
                 general.addEntry(builder.getEntryBuilder()
                                 .startIntField(Component.literal("Restart Time (Minutes)"), MacroConfig.restartTime)
