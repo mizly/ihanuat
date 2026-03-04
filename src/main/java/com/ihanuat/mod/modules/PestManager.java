@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import com.ihanuat.mod.MacroConfig;
 import com.ihanuat.mod.MacroState;
+import com.ihanuat.mod.MacroStateManager;
 import com.ihanuat.mod.mixin.AccessorInventory;
 import com.ihanuat.mod.util.ClientUtils;
 
@@ -55,7 +56,7 @@ public class PestManager {
     }
 
     public static void checkTabListForPests(Minecraft client, MacroState.State currentState) {
-        if (client.getConnection() == null || !com.ihanuat.mod.MacroStateManager.isMacroRunning())
+        if (client.getConnection() == null || !MacroStateManager.isMacroRunning())
             return;
 
         long timeSinceFinished = System.currentTimeMillis() - lastCleaningFinishedTime;
@@ -219,6 +220,7 @@ public class PestManager {
                     }
 
                     ClientUtils.waitForGearAndGui(client);
+                    MacroStateManager.setCurrentState(MacroState.State.VISITING);
                     com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
                     com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:visitor", 0);
                     isCleaningInProgress = false;

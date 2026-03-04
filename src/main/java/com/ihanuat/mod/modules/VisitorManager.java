@@ -105,6 +105,7 @@ public class VisitorManager {
                 ClientUtils.waitForWardrobeGui(client);
             }
             ClientUtils.waitForGearAndGui(client);
+            com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.VISITING);
             com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
             com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:visitor", 0);
             PestManager.isCleaningInProgress = false;

@@ -1,6 +1,8 @@
 package com.ihanuat.mod.modules;
 
 import com.ihanuat.mod.MacroConfig;
+import com.ihanuat.mod.MacroState;
+import com.ihanuat.mod.MacroStateManager;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -22,6 +24,7 @@ public class ProfitManager {
     private static long lastCultivatingValue = -1;
     private static String currentFarmedCrop = "Wheat";
     private static long lastBazaarFetchTime = 0;
+    private static long lastPurseBalance = -1;
 
     // Spray cost tracking: quantity is tracked separately from coins
     private static long spraySessionQuantity = 0;
@@ -74,7 +77,7 @@ public class ProfitManager {
     private static final Set<String> PETS_SET = Set.of("Epic Slug", "Legendary Slug", "Rat");
 
     private static final Set<String> MISC_DROPS_SET = Set.of("Cropie", "Squash", "Fermento", "Helianthus",
-            "Tool EXP Capsule", "Pet XP");
+            "Tool EXP Capsule", "Pet XP", "Purse");
 
     private static final Set<String> BASE_CROPS = Set.of(
             "Wheat", "Potato", "Carrot", "Melon Slice", "Pumpkin",
@@ -130,7 +133,8 @@ public class ProfitManager {
             Map.entry("Helianthus", 0.0), Map.entry("Tool EXP Capsule", 100000.0),
             // Pet XP (price per XP point, will be fetched)
             Map.entry("Pet XP", 0.0),
-            Map.entry("Pest Shard", 0.0));
+            Map.entry("Pest Shard", 0.0),
+            Map.entry("Purse", 1.0));
 
     private static final Map<String, String> BAZAAR_MAPPING = Map.ofEntries(
             Map.entry("Sunder VI Book", "ENCHANTMENT_SUNDER_6"),
@@ -250,6 +254,10 @@ public class ProfitManager {
 
         Matcher bazaarMatcher = BAZAAR_BUY_PATTERN.matcher(plainText);
         if (bazaarMatcher.find()) {
+            if (MacroStateManager.getCurrentState() == MacroState.State.VISITING) {
+                ClientUtils.sendDebugMessage(Minecraft.getInstance(), "Bazaar buy ignored (Visiting state)");
+                return;
+            }
             try {
                 int count = Integer.parseInt(bazaarMatcher.group(1));
                 String itemName = bazaarMatcher.group(2).trim();
@@ -541,6 +549,7 @@ public class ProfitManager {
         sessionCounts.clear();
         PetXpTracker.reset();
         lastBazaarSprayBuyTime = 0;
+        lastPurseBalance = -1;
     }
 
     public static void resetLifetime() {
@@ -588,7 +597,8 @@ public class ProfitManager {
 
     public static double getItemPrice(String itemName) {
         // Visitor cost: count IS the coin amount, so price = 1.0
-        if ("[Visitor] Visitor Cost".equals(itemName) || "[Spray] Sprayonator".equals(itemName)) {
+        if ("[Visitor] Visitor Cost".equals(itemName) || "[Spray] Sprayonator".equals(itemName)
+                || "Purse".equals(itemName)) {
             return 1.0;
         }
         // Copper: value based on Green Thumb (1500 copper)
@@ -706,6 +716,16 @@ public class ProfitManager {
             }
         }
         lastCultivatingValue = -1;
+
+        // 3. Track Purse
+        long currentPurse = ClientUtils.getPurse(client);
+        if (lastPurseBalance != -1) {
+            if (currentPurse > lastPurseBalance) {
+                long delta = currentPurse - lastPurseBalance;
+                addDrop("Purse", delta);
+            }
+        }
+        lastPurseBalance = currentPurse;
 
         // Track Pet XP from tab list
         PetXpTracker.update(client);

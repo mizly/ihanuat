@@ -173,6 +173,39 @@ public class ClientUtils {
         return 0;
     }
 
+    public static long getPurse(Minecraft client) {
+        if (client.level == null || client.player == null)
+            return 0;
+
+        Scoreboard scoreboard = client.level.getScoreboard();
+        if (scoreboard == null)
+            return 0;
+
+        Objective sidebar = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
+        if (sidebar == null)
+            return 0;
+
+        Collection<PlayerScoreEntry> scores = scoreboard.listPlayerScores(sidebar);
+        for (PlayerScoreEntry entry : scores) {
+            String entryName = entry.owner();
+            PlayerTeam team = scoreboard.getPlayersTeam(entryName);
+            String fullText = entryName;
+            if (team != null) {
+                fullText = team.getPlayerPrefix().getString() + entryName + team.getPlayerSuffix().getString();
+            }
+            String line = fullText.replaceAll("(?i)§[0-9A-FK-ORZ]", "").replaceAll(",", "").trim();
+
+            if (line.contains("Purse:")) {
+                try {
+                    String value = line.split("Purse:")[1].trim().replaceAll("[^0-9]", "");
+                    return Long.parseLong(value);
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return 0;
+    }
+
     public static String getCurrentPlot(Minecraft client) {
         if (client.level == null || client.player == null)
             return "Unknown";
