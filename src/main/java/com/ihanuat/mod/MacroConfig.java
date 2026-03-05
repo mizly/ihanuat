@@ -10,7 +10,7 @@ import java.io.IOException;
 
 public class MacroConfig {
     public enum GearSwapMode {
-        NONE, WARDROBE, ROD
+        NONE, WARDROBE, ROD, ROD_2X
     }
 
     public enum PetRarity {

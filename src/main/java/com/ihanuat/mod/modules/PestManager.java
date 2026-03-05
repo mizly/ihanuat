@@ -340,6 +340,10 @@ public class PestManager {
             }
 
             GearManager.swapToFarmingToolSync(client);
+            if (MacroConfig.gearSwapMode == MacroConfig.GearSwapMode.ROD_2X) {
+                ClientUtils.sendDebugMessage(client, "ROD 2X: Executing second rod cast before returning to farming.");
+                GearManager.executeRodSequence(client);
+            }
 
             // Only wait for gear swap if equipment swap is enabled (since it's only done
             // during cleaning if enabled)
@@ -492,7 +496,8 @@ public class PestManager {
                 }
 
                 // 3. Rod Sequence (Wait for previous steps confirmed by GearManager checks)
-                if (MacroConfig.gearSwapMode == MacroConfig.GearSwapMode.ROD) {
+                if (MacroConfig.gearSwapMode == MacroConfig.GearSwapMode.ROD
+                        || MacroConfig.gearSwapMode == MacroConfig.GearSwapMode.ROD_2X) {
                     GearManager.executeRodSequence(client);
                 }
 
