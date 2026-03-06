@@ -249,6 +249,8 @@ public class IhanuatClient implements ClientModInitializer {
 
                 if (text.contains("Taunahi >>") && text.contains("Let's use sprayonator.")) {
                     MacroStateManager.setCurrentState(MacroState.State.SPRAYING);
+                    PestManager.isCleaningInProgress = true; // Prevent checkTabListForPests from re-triggering
+                                                             // startCleaningSequence
                     ProfitManager.startSprayPhase();
                     return;
                 }
@@ -329,7 +331,8 @@ public class IhanuatClient implements ClientModInitializer {
                 }
 
                 if ((MacroStateManager.getCurrentState() == MacroState.State.VISITING
-                        || MacroStateManager.getCurrentState() == MacroState.State.CLEANING)
+                        || MacroStateManager.getCurrentState() == MacroState.State.CLEANING
+                        || MacroStateManager.getCurrentState() == MacroState.State.SPRAYING)
                         && plainText.toLowerCase().contains("visitor") && plainText.toLowerCase().contains("script")
                         && (plainText.toLowerCase().contains("finished") || plainText.toLowerCase().contains("stopped"))
                         && !plainText.contains("sequence complete")) {
