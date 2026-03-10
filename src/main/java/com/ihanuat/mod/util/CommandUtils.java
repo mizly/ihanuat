@@ -7,7 +7,7 @@ import java.util.Queue;
 
 public class CommandUtils {
     private static final Queue<String> chatMessageQueue = new LinkedList<>();
-    private static final long MESSAGE_TIMEOUT_MS = 3000; // 3 second timeout
+    private static final long MESSAGE_TIMEOUT_MS = 10000; // 10 second timeout
 
     /**
      * Register a chat message to the queue.
@@ -99,6 +99,7 @@ public class CommandUtils {
      * @return true if spawn was set successfully, false if timeout occurred
      */
     public static boolean setSpawn(Minecraft client) {
+        clearMessageQueue();
         ClientUtils.sendCommand(client, "/setspawn");
 
         boolean success = waitForChatMessage(client, "Your spawn location has been set!");

@@ -27,11 +27,18 @@ public class PestCleaningSequencer {
 
         MacroWorkerThread.getInstance().submit("CleaningSequence-" + plot, () -> {
             try {
-                com.ihanuat.mod.util.CommandUtils.setSpawn(client);
+                // Set spawn with 10s timeout (increased in CommandUtils)
                 if (MacroWorkerThread.shouldAbortTask(client))
                     return;
-                // sleep no longer needed since we use CommandUtils.setSpawn now
-                // MacroWorkerThread.sleep(850);
+                if (!com.ihanuat.mod.util.CommandUtils.setSpawn(client)) {
+                    client.player.displayClientMessage(
+                            net.minecraft.network.chat.Component.literal(
+                                    "§c[Ihanuat] /setspawn timed out — aborting pest cleaning to prevent roof spawn."),
+                            false);
+                    PestManager.isCleaningInProgress = false;
+                    com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
+                    return;
+                }
                 if (MacroWorkerThread.shouldAbortTask(client))
                     return;
                 if (sessionId != PestManager.currentPestSessionId)
@@ -85,7 +92,8 @@ public class PestCleaningSequencer {
                         true);
                 client.execute(() -> GearManager.ensureWardrobeSlot(client, targetSlot));
 
-                // client.execute is async; wait for swap state to actually start so later waits are not skipped.
+                // client.execute is async; wait for swap state to actually start so later waits
+                // are not skipped.
                 long wardrobeStartWait = System.currentTimeMillis();
                 while (!WardrobeManager.isSwappingWardrobe && System.currentTimeMillis() - wardrobeStartWait < 2000) {
                     if (MacroWorkerThread.shouldAbortTask(client))
@@ -158,9 +166,6 @@ public class PestCleaningSequencer {
     private static void startPestCleanerScript(Minecraft client, String currentInfestedPlot) {
         ClientUtils.sendDebugMessage(client, "Ready to start pest cleaner");
         com.ihanuat.mod.util.CommandUtils.stopScript(client, 50);
-        GearManager.swapToFarmingToolSync(client);
-        if (MacroWorkerThread.shouldAbortTask(client))
-            return;
 
         ClientUtils.sendDebugMessage(client, "Starting pest cleaner script for plot " + currentInfestedPlot);
         if (MacroConfig.autoRodPestSpawn) {

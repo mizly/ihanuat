@@ -348,7 +348,7 @@ public class IhanuatClient implements ClientModInitializer {
                                             return;
                                         }
                                         PestManager.tryStartCleaningSequenceFromChat(Minecraft.getInstance(), plot,
-                                            parsedSpawnedCount);
+                                                parsedSpawnedCount);
                                     });
                                 } else {
                                     MacroWorkerThread.getInstance().submit("PestClean-ChatTrigger-" + plot,
@@ -358,7 +358,7 @@ public class IhanuatClient implements ClientModInitializer {
                                                     return;
                                                 }
                                                 PestManager.tryStartCleaningSequenceFromChat(
-                                                    Minecraft.getInstance(), plot, parsedSpawnedCount);
+                                                        Minecraft.getInstance(), plot, parsedSpawnedCount);
                                             });
                                 }
                             } else if (MacroConfig.showDebug) {
@@ -623,6 +623,37 @@ public class IhanuatClient implements ClientModInitializer {
                             if (MacroWorkerThread.shouldAbortTask(client, MacroState.State.FARMING)) {
                                 return;
                             }
+
+                            // Hold W until wall hit if enabled
+                            if (MacroConfig.holdWUntilWall) {
+                                client.execute(() -> client.options.keyUp.setDown(true));
+                                MacroWorkerThread.sleep(200); // let movement start
+                                long wallTimeout = System.currentTimeMillis() + 5000; // 5s safety timeout
+                                double lastX = client.player.getX();
+                                double lastZ = client.player.getZ();
+                                while (System.currentTimeMillis() < wallTimeout) {
+                                    if (MacroWorkerThread.shouldAbortTask(client, MacroState.State.FARMING)) {
+                                        client.execute(() -> client.options.keyUp.setDown(false));
+                                        return;
+                                    }
+                                    MacroWorkerThread.sleep(100);
+                                    double currX = client.player.getX();
+                                    double currZ = client.player.getZ();
+                                    double moved = Math.sqrt(
+                                            (currX - lastX) * (currX - lastX) + (currZ - lastZ) * (currZ - lastZ));
+                                    if (moved < 0.03) { // nearly stopped → hit a wall
+                                        break;
+                                    }
+                                    lastX = currX;
+                                    lastZ = currZ;
+                                }
+                                client.execute(() -> client.options.keyUp.setDown(false));
+                                MacroWorkerThread.sleep(100);
+                                if (MacroWorkerThread.shouldAbortTask(client, MacroState.State.FARMING)) {
+                                    return;
+                                }
+                            }
+
                             if (MacroStateManager.getCurrentState() == MacroState.State.FARMING) {
                                 client.execute(
                                         () -> com.ihanuat.mod.util.CommandUtils.startScript(client,

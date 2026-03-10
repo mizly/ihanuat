@@ -67,6 +67,15 @@ public class ConfigScreenFactory {
                                 .build());
 
                 general.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Hold W Until Wall Hit"),
+                                                MacroConfig.holdWUntilWall)
+                                .setDefaultValue(MacroConfig.DEFAULT_HOLD_W_UNTIL_WALL)
+                                .setTooltip(Component.literal(
+                                                "On /plottp farms only. Holds W after rewarp until hitting a wall, then starts the script."))
+                                .setSaveConsumer(newValue -> MacroConfig.holdWUntilWall = newValue)
+                                .build());
+
+                general.addEntry(builder.entryBuilder()
                                 .startStrField(Component.literal("PlotTP Number"), MacroConfig.plotTpNumber)
                                 .setDefaultValue(MacroConfig.DEFAULT_PLOT_TP_NUMBER)
                                 .setSaveConsumer(newValue -> MacroConfig.plotTpNumber = newValue)
@@ -367,7 +376,8 @@ public class ConfigScreenFactory {
                                 .startBooleanToggle(Component.literal("Show Daily Session Profit HUD"),
                                                 MacroConfig.showDailyHud)
                                 .setDefaultValue(MacroConfig.DEFAULT_SHOW_DAILY_HUD)
-                                .setTooltip(Component.literal("Display the profit tracker for today (resets daily at midnight using your local timezone)."))
+                                .setTooltip(Component.literal(
+                                                "Display the profit tracker for today (resets daily at midnight using your local timezone)."))
                                 .setSaveConsumer(newValue -> MacroConfig.showDailyHud = newValue)
                                 .build());
 

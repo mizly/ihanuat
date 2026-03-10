@@ -67,6 +67,7 @@ public class MacroConfig {
     public static final int DEFAULT_REST_BREAK_TIME = 20;
     public static final int DEFAULT_REST_BREAK_TIME_OFFSET = 3;
     public static final boolean DEFAULT_ENABLE_PLOT_TP_REWARP = false;
+    public static final boolean DEFAULT_HOLD_W_UNTIL_WALL = false;
     public static final String DEFAULT_PLOT_TP_NUMBER = "0";
     public static final String DEFAULT_DISCORD_WEBHOOK_URL = "";
     public static final int DEFAULT_DISCORD_STATUS_UPDATE_TIME = 5;
@@ -205,6 +206,7 @@ public class MacroConfig {
     public static int restBreakTimeOffset = DEFAULT_REST_BREAK_TIME_OFFSET;
 
     public static boolean enablePlotTpRewarp = DEFAULT_ENABLE_PLOT_TP_REWARP;
+    public static boolean holdWUntilWall = DEFAULT_HOLD_W_UNTIL_WALL;
     public static String plotTpNumber = DEFAULT_PLOT_TP_NUMBER;
     public static String discordWebhookUrl = DEFAULT_DISCORD_WEBHOOK_URL;
     public static int discordStatusUpdateTime = DEFAULT_DISCORD_STATUS_UPDATE_TIME;
@@ -359,6 +361,7 @@ public class MacroConfig {
         data.restBreakTimeOffset = restBreakTimeOffset;
 
         data.enablePlotTpRewarp = enablePlotTpRewarp;
+        data.holdWUntilWall = holdWUntilWall;
         data.plotTpNumber = plotTpNumber;
         data.discordWebhookUrl = discordWebhookUrl;
         data.discordStatusUpdateTime = discordStatusUpdateTime;
@@ -469,6 +472,7 @@ public class MacroConfig {
                 restBreakTimeOffset = data.restBreakTimeOffset;
 
                 enablePlotTpRewarp = data.enablePlotTpRewarp;
+                holdWUntilWall = data.holdWUntilWall;
                 if (data.plotTpNumber != null)
                     plotTpNumber = data.plotTpNumber;
                 if (data.discordWebhookUrl != null)
@@ -572,6 +576,7 @@ public class MacroConfig {
         int restBreakTimeOffset = DEFAULT_REST_BREAK_TIME_OFFSET;
 
         boolean enablePlotTpRewarp = DEFAULT_ENABLE_PLOT_TP_REWARP;
+        boolean holdWUntilWall = DEFAULT_HOLD_W_UNTIL_WALL;
         String plotTpNumber = DEFAULT_PLOT_TP_NUMBER;
         String discordWebhookUrl = DEFAULT_DISCORD_WEBHOOK_URL;
         int discordStatusUpdateTime = DEFAULT_DISCORD_STATUS_UPDATE_TIME;
