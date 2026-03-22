@@ -133,25 +133,33 @@ public class ProfitManager {
         compact.put("Costs", 0L);
         compact.put("Others", 0L);
 
+        boolean isCleaning = MacroStateManager.getCurrentState() == MacroState.State.CLEANING;
+
         for (Map.Entry<String, Long> entry : targetCounts.entrySet()) {
             String name = entry.getKey();
             long count = entry.getValue();
             long profit = (long) (BazaarService.getItemPrice(name) * count);
 
-            if (ItemConstants.CROPS_SET.contains(name)) {
-                compact.put("Crops", compact.get("Crops") + profit);
+            if (name.equals("[Visitor] Visitor Cost") || name.equals("[Spray] Sprayonator") || profit < 0) {
+                compact.put("Costs", compact.get("Costs") + profit);
+            } else if (ItemConstants.CROPS_SET.contains(name)) {
+                if (isCleaning) {
+                    compact.put("Pest Items", compact.get("Pest Items") + profit);
+                } else {
+                    compact.put("Crops", compact.get("Crops") + profit);
+                }
             } else if (ItemConstants.PEST_ITEMS_SET.contains(name)) {
                 compact.put("Pest Items", compact.get("Pest Items") + profit);
             } else if (ItemConstants.PETS_SET.contains(name)) {
                 compact.put("Pets", compact.get("Pets") + profit);
             } else if (ItemConstants.MISC_DROPS_SET.contains(name) || name.toLowerCase().startsWith("pet xp (")) {
-                compact.put("Misc Drops", compact.get("Misc Drops") + profit);
-            } else if (name.equals("[Visitor] Visitor Cost") || name.equals("[Spray] Sprayonator")) {
-                compact.put("Costs", compact.get("Costs") + profit);
+                if (isCleaning) {
+                    compact.put("Pest Items", compact.get("Pest Items") + profit);
+                } else {
+                    compact.put("Misc Drops", compact.get("Misc Drops") + profit);
+                }
             } else if (name.startsWith("[Visitor] ")) {
                 compact.put("Visitor", compact.get("Visitor") + profit);
-            } else if (profit < 0) {
-                compact.put("Costs", compact.get("Costs") + profit);
             } else {
                 compact.put("Others", compact.get("Others") + profit);
             }
