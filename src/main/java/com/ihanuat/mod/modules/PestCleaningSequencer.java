@@ -3,7 +3,6 @@ package com.ihanuat.mod.modules;
 import com.ihanuat.mod.MacroConfig;
 import com.ihanuat.mod.MacroState;
 import com.ihanuat.mod.MacroWorkerThread;
-import com.ihanuat.mod.modules.GearManager;
 import com.ihanuat.mod.util.ClientUtils;
 
 import net.minecraft.client.Minecraft;
@@ -121,13 +120,12 @@ public class PestCleaningSequencer {
 
         MacroWorkerThread.getInstance().submit("CleaningSequence-" + plot, () -> {
             try {
-                // Set spawn with 10s timeout (increased in CommandUtils)
                 if (MacroWorkerThread.shouldAbortTask(client))
                     return;
                 if (!com.ihanuat.mod.util.CommandUtils.setSpawn(client)) {
                     client.player.displayClientMessage(
                             net.minecraft.network.chat.Component.literal(
-                                    "§c[Ihanuat] /setspawn timed out — aborting pest cleaning to prevent roof spawn."),
+                                    "\u00A7c[Ihanuat] /setspawn timed out â€” aborting pest cleaning to prevent roof spawn."),
                             false);
                     PestManager.isCleaningInProgress = false;
                     com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
@@ -149,25 +147,24 @@ public class PestCleaningSequencer {
                 boolean shouldDoAotv = PestAotvManager.shouldDoAotvOnCurrentPlot(client, currentInfestedPlot,
                         isSamePlot);
 
-                // restoreGearForCleaning restores farming wardrobe/equipment BEFORE movement.
                 if (!restoreGearForCleaning(client, shouldDoAotv))
                     return;
 
                 PestPrepSwapManager.prepSwappedForCurrentPestCycle = false;
                 client.player.displayClientMessage(
-                        Component.literal("§6Starting Pest Cleaner script (" + currentInfestedPlot + ")..."), true);
+                        Component.literal("\u00A76Starting Pest Cleaner script (" + currentInfestedPlot + ")..."), true);
                 if (MacroWorkerThread.shouldAbortTask(client))
                     return;
 
                 if (PestBonusManager.isBonusInactive) {
                     client.player.displayClientMessage(
-                            Component.literal("§dBonus is INACTIVE! Triggering Phillip reactivation..."), true);
+                            Component.literal("\u00A7dBonus is INACTIVE! Triggering Phillip reactivation..."), true);
                     PestBonusManager.isReactivatingBonus = true;
 
                     if (MacroConfig.autoRodPestSpawn) {
-                        ClientUtils.sendDebugMessage(client, "Auto Rod: Triggering rod cast on pest spawn (Bonus inactive).");
+                        ClientUtils.sendDebugMessage(client,
+                                "Auto Rod: Triggering rod cast on pest spawn (Bonus inactive).");
                         RodManager.executeRodSequence(client);
-                        // Swap to farming tool after rod usage.
                         GearManager.swapToFarmingTool(client);
                     }
                     com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:pestCleaner", 0);
@@ -175,10 +172,8 @@ public class PestCleaningSequencer {
                 }
 
                 if (shouldDoAotv) {
-                    // AOTV to roof handles movement — skip /tptoplot
                     PestAotvManager.performAotvToRoof(client);
                 } else {
-                    // AOTV off: always /tptoplot, even on same plot
                     warpToInfestedPlotIfNeeded(client, currentInfestedPlot, false);
                 }
 
@@ -193,9 +188,8 @@ public class PestCleaningSequencer {
     /**
      * Restores farming wardrobe and equipment before starting the pest cleaner.
      *
-     * @param aotvPath  true when the sequence will AOTV to the roof.  In that
-     *                  case wardrobeAotvDelay is used instead of wardrobePostSwapDelay,
-     *                  allowing independent tuning of the AOTV launch cadence.
+     * @param aotvPath true when the sequence will AOTV to the roof. In that case
+     *                 wardrobeAotvDelay is used instead of wardrobePostSwapDelay.
      */
     private static boolean restoreGearForCleaning(Minecraft client, boolean aotvPath) throws InterruptedException {
         if (MacroConfig.autoWardrobePest) {
@@ -204,7 +198,7 @@ public class PestCleaningSequencer {
                     || WardrobeManager.trackedWardrobeSlot != targetSlot)
                     && targetSlot > 0) {
                 client.player.displayClientMessage(
-                        Component.literal("§eRestoring Farming Wardrobe (Slot " + targetSlot + ") for Vacuuming..."),
+                        Component.literal("\u00A7eRestoring Farming Wardrobe (Slot " + targetSlot + ") for Vacuuming..."),
                         true);
                 client.execute(() -> GearManager.ensureWardrobeSlot(client, targetSlot));
 
@@ -222,17 +216,15 @@ public class PestCleaningSequencer {
 
                 if (WardrobeManager.isSwappingWardrobe) {
                     ClientUtils.sendDebugMessage(client,
-                            "§eWardrobe swap wait timeout in cleaning sequence. Triggering failsafe completion.");
+                            "\u00A7eWardrobe swap wait timeout in cleaning sequence. Triggering failsafe completion.");
                     WardrobeManager.forceWardrobeCompletionFailsafe(client);
                 }
 
                 while (WardrobeManager.wardrobeCleanupTicks > 0)
                     MacroWorkerThread.sleep(50);
 
-                // AOTV path: use the user-configured wardrobeAotvDelay.
-                // Non-AOTV path: use the user-configured wardrobePostSwapDelay.
-                int postSwapWait = aotvPath ? MacroConfig.getRandomizedDelay(MacroConfig.wardrobeAotvDelay) 
-                                            : MacroConfig.getRandomizedDelay(MacroConfig.wardrobePostSwapDelay);
+                int postSwapWait = aotvPath ? MacroConfig.getRandomizedDelay(MacroConfig.wardrobeAotvDelay)
+                        : MacroConfig.getRandomizedDelay(MacroConfig.wardrobePostSwapDelay);
                 MacroWorkerThread.sleep(postSwapWait);
 
                 if (MacroWorkerThread.shouldAbortTask(client))
@@ -241,24 +233,54 @@ public class PestCleaningSequencer {
         }
 
         if (MacroConfig.autoEquipment) {
+            Boolean trackedBeforeSwap = EquipmentManager.trackedIsPestGear;
             GearManager.ensureEquipment(client, true);
 
             long equipmentStartWait = System.currentTimeMillis();
-            while (!EquipmentManager.isSwappingEquipment && System.currentTimeMillis() - equipmentStartWait < 2000) {
+            while (!EquipmentManager.isSwappingEquipment
+                    && !Boolean.FALSE.equals(EquipmentManager.trackedIsPestGear)
+                    && System.currentTimeMillis() - equipmentStartWait < 2000) {
                 if (MacroWorkerThread.shouldAbortTask(client))
                     return false;
                 MacroWorkerThread.sleep(25);
             }
 
-            ClientUtils.waitForEquipmentGui(client);
-            long equipmentFinishWait = System.currentTimeMillis();
-            while (EquipmentManager.isSwappingEquipment && System.currentTimeMillis() - equipmentFinishWait < 7000)
-                MacroWorkerThread.sleep(50);
+            if (EquipmentManager.isSwappingEquipment) {
+                ClientUtils.waitForEquipmentGui(client);
+                long equipmentFinishWait = System.currentTimeMillis();
+                while (EquipmentManager.isSwappingEquipment && System.currentTimeMillis() - equipmentFinishWait < 7000)
+                    MacroWorkerThread.sleep(50);
+            }
 
             if (EquipmentManager.isSwappingEquipment) {
                 ClientUtils.sendDebugMessage(client,
-                        "§eEquipment swap wait timeout in cleaning sequence. Resetting equipment state.");
+                        "\u00A7eEquipment swap wait timeout in cleaning sequence. Resetting equipment state.");
                 EquipmentManager.resetState();
+            }
+
+            long equipmentConfirmWait = System.currentTimeMillis();
+            while (!Boolean.FALSE.equals(EquipmentManager.trackedIsPestGear)
+                    && System.currentTimeMillis() - equipmentConfirmWait < 3000) {
+                if (MacroWorkerThread.shouldAbortTask(client))
+                    return false;
+                MacroWorkerThread.sleep(50);
+            }
+
+            ClientUtils.waitForGearAndGui(client);
+            long cleanupWaitStart = System.currentTimeMillis();
+            while (WardrobeManager.wardrobeCleanupTicks > 0
+                    && System.currentTimeMillis() - cleanupWaitStart < 2000) {
+                if (MacroWorkerThread.shouldAbortTask(client))
+                    return false;
+                MacroWorkerThread.sleep(50);
+            }
+
+            if (!Boolean.FALSE.equals(EquipmentManager.trackedIsPestGear)) {
+                ClientUtils.sendDebugMessage(client,
+                        "\u00A7cCleaning sequence aborted: farming equipment was not confirmed before AOTV."
+                                + " trackedBefore=" + trackedBeforeSwap
+                                + ", trackedAfter=" + EquipmentManager.trackedIsPestGear);
+                return false;
             }
 
             MacroWorkerThread.sleep(250);
@@ -278,7 +300,7 @@ public class PestCleaningSequencer {
             return !MacroWorkerThread.shouldAbortTask(client);
         }
 
-        client.player.displayClientMessage(Component.literal("§cFailed to warp to plot " + currentInfestedPlot + "!"),
+        client.player.displayClientMessage(Component.literal("\u00A7cFailed to warp to plot " + currentInfestedPlot + "!"),
                 true);
         return false;
     }
@@ -293,7 +315,6 @@ public class PestCleaningSequencer {
             RodManager.executeRodSequence(client);
         }
 
-        // Swap to farming tool before starting pest cleaner script
         GearManager.swapToFarmingTool(client);
 
         com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:pestCleaner", 0);
