@@ -3,6 +3,7 @@ package com.ihanuat.mod.modules;
 import com.ihanuat.mod.MacroConfig;
 import com.ihanuat.mod.MacroState;
 import com.ihanuat.mod.MacroWorkerThread;
+import com.ihanuat.mod.modules.GearManager;
 import com.ihanuat.mod.util.ClientUtils;
 
 import net.minecraft.client.Minecraft;
@@ -10,13 +11,105 @@ import net.minecraft.network.chat.Component;
 
 public class PestCleaningSequencer {
     private static final long SETSPAWN_TO_WARDROBE_COOLDOWN_MS = 1000L;
+    private static final long CLEANING_START_BUSY_WAIT_MS = 10000L;
+    private static final Object DEFERRED_START_LOCK = new Object();
+
+    private static volatile boolean cleaningStartDeferred = false;
+    private static volatile String deferredPlot = null;
+    private static volatile String deferredInfestedPlot = null;
+    private static volatile int deferredSessionId = 0;
 
     public static void startCleaningSequence(Minecraft client, String plot, String currentInfestedPlot,
             int currentPestSessionId) {
-        if (PestManager.isCleaningInProgress || WardrobeManager.isSwappingWardrobe
-                || EquipmentManager.isSwappingEquipment)
+        if (PestManager.isCleaningInProgress)
             return;
 
+        if (isCleaningStartBlockedByGearSwap()) {
+            deferCleaningSequenceStart(client, plot, currentInfestedPlot, currentPestSessionId);
+            return;
+        }
+
+        submitCleaningSequence(client, plot, currentInfestedPlot, currentPestSessionId);
+    }
+
+    private static boolean isCleaningStartBlockedByGearSwap() {
+        return WardrobeManager.isSwappingWardrobe
+                || EquipmentManager.isSwappingEquipment
+                || PestPrepSwapManager.isPrepSwapping;
+    }
+
+    private static void deferCleaningSequenceStart(Minecraft client, String plot, String currentInfestedPlot,
+            int currentPestSessionId) {
+        boolean shouldQueueWaitTask = false;
+        synchronized (DEFERRED_START_LOCK) {
+            deferredPlot = plot;
+            deferredInfestedPlot = currentInfestedPlot;
+            deferredSessionId = currentPestSessionId;
+            if (!cleaningStartDeferred) {
+                cleaningStartDeferred = true;
+                shouldQueueWaitTask = true;
+            }
+        }
+
+        if (!shouldQueueWaitTask) {
+            ClientUtils.sendDebugMessage(client,
+                    "Cleaning start still blocked by gear swap; updated deferred request for plot " + currentInfestedPlot);
+            return;
+        }
+
+        ClientUtils.sendDebugMessage(client,
+                "Cleaning start blocked by gear swap; deferring pest cleaning for plot " + currentInfestedPlot);
+        MacroWorkerThread.getInstance().submit("CleaningSequence-WaitForGear-" + plot, () -> {
+            long waitStart = System.currentTimeMillis();
+            try {
+                while (isCleaningStartBlockedByGearSwap()) {
+                    if (MacroWorkerThread.shouldAbortTask(client, MacroState.State.FARMING))
+                        return;
+                    if (System.currentTimeMillis() - waitStart > CLEANING_START_BUSY_WAIT_MS) {
+                        ClientUtils.sendDebugMessage(client,
+                                "Cleaning start timed out waiting for gear swap to finish.");
+                        return;
+                    }
+                    MacroWorkerThread.sleep(50);
+                }
+
+                ClientUtils.waitForGearAndGui(client);
+                long cleanupWaitStart = System.currentTimeMillis();
+                while (WardrobeManager.wardrobeCleanupTicks > 0
+                        && System.currentTimeMillis() - cleanupWaitStart < 2000) {
+                    if (MacroWorkerThread.shouldAbortTask(client, MacroState.State.FARMING))
+                        return;
+                    MacroWorkerThread.sleep(50);
+                }
+            } finally {
+                synchronized (DEFERRED_START_LOCK) {
+                    cleaningStartDeferred = false;
+                }
+            }
+
+            if (PestManager.isCleaningInProgress || MacroWorkerThread.shouldAbortTask(client, MacroState.State.FARMING))
+                return;
+
+            String latestPlot;
+            String latestInfestedPlot;
+            int latestSessionId;
+            synchronized (DEFERRED_START_LOCK) {
+                latestPlot = deferredPlot;
+                latestInfestedPlot = deferredInfestedPlot;
+                latestSessionId = deferredSessionId;
+                deferredPlot = null;
+                deferredInfestedPlot = null;
+            }
+
+            if (latestSessionId != PestManager.currentPestSessionId)
+                return;
+
+            startCleaningSequence(client, latestPlot, latestInfestedPlot, latestSessionId);
+        });
+    }
+
+    private static void submitCleaningSequence(Minecraft client, String plot, String currentInfestedPlot,
+            int currentPestSessionId) {
         ClientUtils.sendDebugMessage(client,
                 "Stopping script: Pest threshold reached, starting cleaning sequence for plot " + plot);
         com.ihanuat.mod.util.CommandUtils.stopScript(client, 0);
@@ -74,8 +167,9 @@ public class PestCleaningSequencer {
                     if (MacroConfig.autoRodPestSpawn) {
                         ClientUtils.sendDebugMessage(client, "Auto Rod: Triggering rod cast on pest spawn (Bonus inactive).");
                         RodManager.executeRodSequence(client);
+                        // Swap to farming tool after rod usage.
+                        GearManager.swapToFarmingTool(client);
                     }
-
                     com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:pestCleaner", 0);
                     return;
                 }
@@ -198,6 +292,10 @@ public class PestCleaningSequencer {
             ClientUtils.sendDebugMessage(client, "Auto Rod: Triggering rod cast on pest spawn.");
             RodManager.executeRodSequence(client);
         }
+
+        // Swap to farming tool before starting pest cleaner script
+        GearManager.swapToFarmingTool(client);
+
         com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:pestCleaner", 0);
     }
 }
